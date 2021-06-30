@@ -1,55 +1,62 @@
+// import { loadSprites } from './modules/sprites.js';
+
+// alert('is this thing working??');
+
 kaboom({
   global: true,
   fullscreen: true,
-  scale: 1.5,
+  scale: 1.3,
   debug: true,
   clearColor: [0, 0, 0, 1]
 })
 
 const PLAYER_MOVE_SPEED = 80
 
+// load the sprites
+// loadSprites();
 loadRoot('images/')
-// loadSprite('dirt', 'dirtBg.png')
-loadSprite('bg', 'simpleBg.png')
-loadSprite('lever', 'lever.png')
+loadSprite('dirt', 'dirt.png')
+// loadSprite('bg', 'simpleBg.png')
+loadSprite('interact', 'transparent16pxSquare.png')
 loadSprite("player", "playerSheet.png", {
-	sliceX: 3,
+  sliceX: 3,
   sliceY: 4,
-	anims: {
-		idleRight: {
-			from: 0,
-			to: 0,
-		},
-		moveRight: {
-			from: 1,
-			to: 2,
-		},
-		idleLeft: {
-			from: 3,
-			to: 3,
-		},
-		moveLeft: {
-			from: 4,
-			to: 5,
-		},
-		idleUp: {
-			from: 6,
-			to: 6,
-		},
-		moveUp: {
-			from: 7,
-			to: 8,
-		},
-		idleDown: {
-			from: 9,
-			to: 9,
-		},
-		moveDown: {
-			from: 10,
-			to: 11,
-		},
-	},
+  anims: {
+    idleRight: {
+      from: 0,
+      to: 0,
+    },
+    moveRight: {
+      from: 1,
+      to: 2,
+    },
+    idleLeft: {
+      from: 3,
+      to: 3,
+    },
+    moveLeft: {
+      from: 4,
+      to: 5,
+    },
+    idleUp: {
+      from: 6,
+      to: 6,
+    },
+    moveUp: {
+      from: 7,
+      to: 8,
+    },
+    idleDown: {
+      from: 9,
+      to: 9,
+    },
+    moveDown: {
+      from: 10,
+      to: 11,
+    },
+  },
 });
+
 
 loadRoot('images/brick/')
 loadSprite('brick', 'brick.png')
@@ -62,98 +69,206 @@ loadSprite('brick-top-left', 'brickTL.png')
 loadSprite('brick-bottom-right', 'brickBR.png')
 loadSprite('brick-bottom-left', 'brickBL.png')
 
+loadRoot('images/lever/')
+loadSprite('lever', 'leverSheet.png', {
+  sliceX: 5,
+  anims: {
+    moveRight: {
+      from: 0,
+      to: 4
+    },
+    idleRight: {
+      from: 4,
+      to: 4
+    },
+    idleLeft: {
+      from: 0,
+      to: 0
+    }
+  }
+})
+loadSprite('lever1', 'lever1.png')
+loadSprite('lever2', 'lever2.png')
+loadSprite('lever3', 'lever3.png')
+loadSprite('lever4', 'lever4.png')
+loadSprite('lever5', 'lever5.png')
+
 scene('game', ({ level, score }) => {
-    layers(['bg', 'obj', 'ui'], 'obj')
+  layers(['bg', 'obj', 'ui'], 'obj')
 
-    const map = [
-      '1bbbb21b  b2',
-      'a    Aa    A',
-      'a          A',
-      'a          A',
-      'a    Aa    A',
-      '4B  B34BBBB3',
-      '1b  b21bbbb2',
-      'a    Aa    A',
-      'a          A',
-      'a        l A',
-      'a    Aa    A',
-      '4BBBB34BBBB3'
-    ]
-    
-    const levelCfg = {
-      width: 16,
-      height: 16,
-      'r': [sprite('brick'), solid()],
-      'b': [sprite('brick-top'), solid()],
-      'B': [sprite('brick-bottom'), solid()],
-      'a': [sprite('brick-left'), solid()],
-      'A': [sprite('brick-right'), solid()],
-      '1': [sprite('brick-top-left'), solid()],
-      '2': [sprite('brick-top-right'), solid()],
-      '3': [sprite('brick-bottom-right'), solid()],
-      '4': [sprite('brick-bottom-left'), solid()],
-      // ' ': [sprite('dirt')],
-      'l': [sprite('lever'), solid()]
+  const map = [
+    '1bbbb21bbbb2',
+    'a    Aa    A',
+    'a l        A',
+    'a          A',
+    'a    Aa    A',
+    '4B  B34BBBB3',
+    '1b==b21bbbb2',
+    'a    Aa    A',
+    'a          A',
+    'a          A',
+    'a    Aa    A',
+    '4BBBB34BBBB3'
+  ]
+  
+  const levelCfg = {
+    width: 16,
+    height: 16,
+    'r': [sprite('brick'), solid()],
+    'b': [sprite('brick-top'), solid()],
+    'B': [sprite('brick-bottom'), solid()],
+    'a': [sprite('brick-left'), solid()],
+    'A': [sprite('brick-right'), solid()],
+    '1': [sprite('brick-top-left'), solid()],
+    '2': [sprite('brick-top-right'), solid()],
+    '3': [sprite('brick-bottom-right'), solid()],
+    '4': [sprite('brick-bottom-left'), solid()],
+    ' ': [sprite('dirt'), layer('bg')],
+    'l': [sprite('dirt'), sprite('lever'), solid(), 'lever', { state: 'left' }],
+    '=': [sprite('brick-top'), solid(), 'door']
+  }
+
+  const gameLevel = addLevel(map, levelCfg)
+
+  const player = add([
+    sprite('player'),
+    pos(136,4),
+    {
+      dir: vec2(1, 0),
+      isMoving: false
     }
+  ])
 
-    addLevel(map, levelCfg)
+  // Do this to prevent player from walking through
+  // walls (or solid objects)
+  player.action(() => {
+    player.resolve()
+  })
 
-    add([sprite('bg'), layer('bg')])
+  // Move the camera positioned over the player
+  player.action(() => {
+    camPos(player.pos);
+  });
 
-    const player = add([
-      sprite('player'),
-      pos(136,4)
+  // Move and animate the player when any of the keyboard
+  // arrows are pressed
+  function movePlayer (dirAnimate, speedX, speedY) {
+    player.move(speedX, speedY)
+    if (!player.curAnim !== dirAnimate) {
+      player.play(dirAnimate)
+      player.isMoving = true;
+    }
+  }
+  keyDown('left', () => {
+    movePlayer('moveLeft', -PLAYER_MOVE_SPEED, 0)
+    player.dir = vec2(-1, 0)
+  })
+  keyDown('right', () => {
+    movePlayer('moveRight', PLAYER_MOVE_SPEED, 0)
+    player.dir = vec2(1, 0)
+  })
+  keyDown('up', () => {
+    movePlayer('moveUp', 0, -PLAYER_MOVE_SPEED)
+    player.dir = vec2(0, -1)
+  })
+  keyDown('down', () => {
+    movePlayer('moveDown', 0, PLAYER_MOVE_SPEED)
+    player.dir = vec2(0, 1)
+  })
+
+  // If user releases all direction keys show the
+  // "idle" sprite of the player
+  function idlePlayer (direction) {
+    // as long as there isn't another key pressed
+    // change the player image to idle
+    r = !keyIsDown("right")
+    l = !keyIsDown("left")
+    u = !keyIsDown("up")
+    d = !keyIsDown("down")
+    if (r && l && u && d) {
+      player.play(direction);
+      player.isMoving = false;
+    }
+  }
+  keyRelease('left', () => {idlePlayer('idleLeft')})
+  keyRelease('right', () => {idlePlayer('idleRight')})
+  keyRelease('up', () => {idlePlayer('idleUp')})
+  keyRelease('down', () => {idlePlayer('idleDown')})
+
+  function interact(p) {
+    // create dummy transparent object used to
+    // collide with interactable objects
+    const obj = add([
+      sprite('interact'),
+      pos(p),
+      'interact'
     ])
-
-    // Do this to prevent player from walking through
-    // walls (or solid objects)
-    player.action(() => {
-      player.resolve()
+    
+    // destroy the dummy object after 200 ms
+    wait(0.2, () => {
+      destroy(obj)
     })
+  }
 
-    // Move the camera positioned over the player
-    player.action(() => {
-		  camPos(player.pos);
-	  });
+  // interact with objects
+  keyPress('space', () => {
+    interact(player.pos.add(player.dir.scale(4)))
+  })
 
-    // Move and animate the player when any of the keyboard
-    // arrows are pressed
-    function movePlayer (dirAnimate, speedX, speedY) {
-      player.move(speedX, speedY)
-      if (player.curAnim() !== dirAnimate) {
-        player.play(dirAnimate)
-      }
+  // What to do when player interacts with lever
+  collides('interact', 'lever', (interact, lever) => {
+
+    if (lever.state === 'left' && lever.state !== 'moving') {
+      lever.state = 'moving';
+
+      // animate lever movement
+      wait(0.1, () => {
+        lever.changeSprite('lever2');
+      });
+      wait(0.2, () => {
+        lever.changeSprite('lever3');
+      });
+      wait(0.3, () => {
+        lever.changeSprite('lever4');
+      });
+      wait(0.4, () => {
+        lever.changeSprite('lever5');
+
+        // Open the door by replacing it with dirt
+        const doors = get('door');
+        doors.forEach((door) => {
+          door.solid = false;
+          door.hidden = true;
+          gameLevel.spawn(" ", door.gridPos.sub(0, 0));
+        });
+      });
+      lever.state = 'right';
+    } else if (lever.state === 'right' && lever.state !== 'moving') {
+      lever.state = 'moving'
+
+      // animate lever movement
+      wait(0.1, () => {
+        lever.changeSprite('lever4');
+      });
+      wait(0.2, () => {
+        lever.changeSprite('lever3');
+      });
+      wait(0.3, () => {
+        lever.changeSprite('lever2');
+      });
+      wait(0.4, () => {
+        lever.changeSprite('lever1');
+
+        // Close the door
+        const doors = get('door');
+        doors.forEach((door) => {
+          door.solid = true;
+          door.hidden = false;
+        });
+      });
+      lever.state = 'left';
     }
-    keyDown('left', () => {
-      movePlayer('moveLeft', -PLAYER_MOVE_SPEED, 0)
-    })
-    keyDown('right', () => {
-      movePlayer('moveRight', PLAYER_MOVE_SPEED, 0)
-    })
-    keyDown('up', () => {
-      movePlayer('moveUp', 0, -PLAYER_MOVE_SPEED)
-    })
-    keyDown('down', () => {
-      movePlayer('moveDown', 0, PLAYER_MOVE_SPEED)
-    })
-
-    // If user releases all direction keys show the
-    // "idle" sprite of the player
-    function idlePlayer (direction) {
-      // as long as there isn't another key pressed
-      // change the player image to idle
-      r = !keyIsDown("right")
-      l = !keyIsDown("left")
-      u = !keyIsDown("up")
-      d = !keyIsDown("down")
-      if (r && l && u && d) {
-        player.play(direction);
-      }
-    }
-    keyRelease('left', () => {idlePlayer('idleLeft')})
-    keyRelease('right', () => {idlePlayer('idleRight')})
-    keyRelease('up', () => {idlePlayer('idleUp')})
-    keyRelease('down', () => {idlePlayer('idleDown')})
+  })
 
 })
 
