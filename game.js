@@ -5,7 +5,7 @@
 kaboom({
   global: true,
   fullscreen: true,
-  scale: 1.3,
+  scale: 1.5,
   debug: true,
   clearColor: [0, 0, 0, 1]
 })
@@ -123,6 +123,7 @@ scene('game', ({ level, score }) => {
     '2': [sprite('brick-top-right'), solid()],
     '3': [sprite('brick-bottom-right'), solid()],
     '4': [sprite('brick-bottom-left'), solid()],
+    'x': [sprite('dirt'), layer('bg'), 'player-start'],
     ' ': [sprite('dirt'), layer('bg')],
     'l': [sprite('dirt'), sprite('lever'), solid(), 'lever', { state: 'left' }],
     '=': [sprite('brick-top'), solid(), 'door']
@@ -130,12 +131,16 @@ scene('game', ({ level, score }) => {
 
   const gameLevel = addLevel(map, levelCfg)
 
+  // const doors = get('door');
+  // door.gridPos.sub(0, 0)
+
   const player = add([
     sprite('player'),
-    pos(136,4),
+    // pos(get('player-start')[0].gridPos),
+    pos(140,40),
     {
       dir: vec2(1, 0),
-      isMoving: false
+      // status: 'idle'
     }
   ])
 
@@ -150,35 +155,55 @@ scene('game', ({ level, score }) => {
     camPos(player.pos);
   });
 
-  // Move and animate the player when any of the keyboard
-  // arrows are pressed
-  function movePlayer (dirAnimate, speedX, speedY) {
-    player.move(speedX, speedY)
-    if (!player.curAnim !== dirAnimate) {
-      player.play(dirAnimate)
-      player.isMoving = true;
-    }
+  // Move the player when any of the keyboard
+  // arrows are held down
+  function movePlayer(speedX, speedY) {
+    player.move(speedX, speedY);
   }
   keyDown('left', () => {
-    movePlayer('moveLeft', -PLAYER_MOVE_SPEED, 0)
+    movePlayer(-PLAYER_MOVE_SPEED, 0)
     player.dir = vec2(-1, 0)
   })
   keyDown('right', () => {
-    movePlayer('moveRight', PLAYER_MOVE_SPEED, 0)
+    movePlayer(PLAYER_MOVE_SPEED, 0)
     player.dir = vec2(1, 0)
   })
   keyDown('up', () => {
-    movePlayer('moveUp', 0, -PLAYER_MOVE_SPEED)
+    movePlayer(0, -PLAYER_MOVE_SPEED)
     player.dir = vec2(0, -1)
   })
   keyDown('down', () => {
-    movePlayer('moveDown', 0, PLAYER_MOVE_SPEED)
+    movePlayer(0, PLAYER_MOVE_SPEED)
+    player.dir = vec2(0, 1)
+  })
+
+  // Animate the player when any of the keyboard
+  // arrows are pressed initially
+  function animatePlayer(dirAnimate) {
+    if (player.curAnim() !== dirAnimate) {
+      player.play(dirAnimate)
+    }
+  }
+  keyPress('left', () => {
+    animatePlayer('moveLeft')
+    player.dir = vec2(-1, 0)
+  })
+  keyPress('right', () => {
+    animatePlayer('moveRight')
+    player.dir = vec2(1, 0)
+  })
+  keyPress('up', () => {
+    animatePlayer('moveUp')
+    player.dir = vec2(0, -1)
+  })
+  keyPress('down', () => {
+    animatePlayer('moveDown')
     player.dir = vec2(0, 1)
   })
 
   // If user releases all direction keys show the
   // "idle" sprite of the player
-  function idlePlayer (direction) {
+  function idlePlayer(direction) {
     // as long as there isn't another key pressed
     // change the player image to idle
     r = !keyIsDown("right")
@@ -187,7 +212,6 @@ scene('game', ({ level, score }) => {
     d = !keyIsDown("down")
     if (r && l && u && d) {
       player.play(direction);
-      player.isMoving = false;
     }
   }
   keyRelease('left', () => {idlePlayer('idleLeft')})
